@@ -29,8 +29,45 @@ Constraints Ranking:
  
 */
 
-public class LinguisticModel {
-    public static void main(String[] args) {
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.List;
 
+public class LinguisticModel {
+    public Scanner scanner;
+    public String input;
+
+    public final List<String> syllables;
+
+    public LinguisticModel() {
+        this.scanner = new Scanner(System.in);
+        this.syllables = new ArrayList<>();
+
+        this.runProgram();
+    }
+
+    public static void main(String[] args) {
+        new LinguisticModel();
+    }
+
+    private void prompt(String prompt) {
+        for (int i = 0; i < 100; i++) {
+            System.out.print('=');
+        }
+
+        System.out.println("\n\n" + prompt + "\n");
+
+        for (int i = 0; i < 100; i++) {
+            System.out.print('=');
+        }
+
+        System.out.println();
+    }
+
+    private void runProgram() {
+        this.prompt("Enter a word from Budai Rukai, separating prefixes, infixes, root, and suffixes!");
+        this.input = this.scanner.nextLine();
+        this.scanner.close();
+        this.prompt("Word: " + this.input);
     }
 }
