@@ -35,7 +35,7 @@ import java.util.List;
 
 public class LinguisticModel {
     //Character Array of Vowels, SHOULD NOT BE MODIFIED!!!
-    public final char[] vowels = {'i', 'y', 'ɨ', 'ʉ', 'ɯ', 'u', 'ɪ', 'ʏ', 'ʊ', 'e', 'ø', 'ɘ', 'ɵ', 'ɤ', 'o', 'ɛ', 'œ', 'ɜ', 'ɞ', 'ʌ', 'ɔ', 'æ', 'ɐ', 'a', 'ɶ', 'ɑ', 'ɒ'};
+    public final char[] vowels = {'i', 'y', 'ɨ', 'ʉ', 'ɯ', 'u', 'ɪ', 'ʏ', 'ʊ', 'e', 'ø', 'ɘ', 'ɵ', 'ɤ', 'o', 'ə', 'ɛ', 'œ', 'ɜ', 'ɞ', 'ʌ', 'ɔ', 'ɐ', 'æ', 'a', 'ɶ', 'ɑ', 'ɒ'};
 
     public Scanner scanner;
 
@@ -96,7 +96,7 @@ public class LinguisticModel {
                 this.sectionStartingIndicies.add(index + 1);
             }
 
-            //Step 2
+            //Step 2: Identify Vowel Locations
             for (char character : this.vowels) {
                 if (character == this.input.charAt(index)) {
                     this.vowelIndicies.add(index);
@@ -104,26 +104,32 @@ public class LinguisticModel {
             }
         }
 
-        //Step 2
-        //TODO: Long vowel not tested
+        //Step 2: Separate Syllables Into ArrayList
         StringBuilder syllable = new StringBuilder();
         for (int index : this.vowelIndicies) {
+            //Preceding Consonant
             if (index - 1 >= 0) {
                 syllable.append(this.input.charAt(index - 1));
             }
 
+            //Vowel
             syllable.append(this.input.charAt(index));
 
-            if (index + 1 <= this.input.length() - 1 && (this.input.charAt(index + 1) == 'w' || this.input.charAt(index + 1) == 'j')) {
+            //Check if the index will be 1 to many | Check if the next character is a ':' or a glide character 'w' or 'j'
+            if (index + 1 <= this.input.length() - 1 && (this.input.charAt(index + 1) == ':' || (this.input.charAt(index + 1) == 'w' || this.input.charAt(index + 1) == 'j'))) {
                 syllable.append(this.input.charAt(index + 1));
             }
 
-            this.syllables.add(syllable.toString());
-            syllable.setLength(0);
-        }
+            //Check if the index will be 1 to many | Check if the next character is a glide character 'w' or 'j'
+            if (index + 2 <= this.input.length() - 1 && (this.input.charAt(index + 2) == 'w' || this.input.charAt(index + 2) == 'j')) {
+                syllable.append(this.input.charAt(index + 2));
+            }
 
-        for (String str : this.syllables) {
-            System.out.println(str);
+            //Add syllable to array list
+            this.syllables.add(syllable.toString());
+
+            //Clear StringBuilder
+            syllable.setLength(0);
         }
     }
 }
