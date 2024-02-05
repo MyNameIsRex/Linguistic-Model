@@ -151,12 +151,12 @@ public class LinguisticModel {
                  or
                  2. The character at index - 2 is a section separator '-'
                  or
-                 3. The character at index - 2 is a consonant and not a root indicator '[' and The character at index - 1 is a consonant
+                 3. The character at index - 2 is a consonant and not a root indicator '[' nor a long vowel indicator ':" and The character at index - 1 is a consonant
 
              */
-            if (index - 2 >= 0 && (this.input.charAt(index - 1) == '-' && this.isNotVowel(this.input.charAt(index - 2)) ||
+            if (index - 2 >= 0 && ((this.input.charAt(index - 1) == '-' && this.isNotVowel(this.input.charAt(index - 2)) ||
                 this.input.charAt(index - 2) == '-') ||
-                this.isNotVowel(this.input.charAt(index - 2)) && this.input.charAt(index - 2) != '[' && this.isNotVowel(this.input.charAt(index - 1))) {
+                this.isNotVowel(this.input.charAt(index - 2)) && this.input.charAt(index - 2) != '[' && this.input.charAt(index - 2) != ':' && this.isNotVowel(this.input.charAt(index - 1)))) {
                 syllable.append(this.input.charAt(index - 2));
             }
 
@@ -232,6 +232,18 @@ public class LinguisticModel {
             return;
         }
 
+        if (unparsedSyllables.size() == 2) {
+            if (this.rootLocation == 0) {
+                parsedWord.append("('").append(unparsedSyllables.get(0)).append(')').append(unparsedSyllables.get(1));
+                this.output = parsedWord.toString();
+                return;
+            }
+
+            parsedWord.append("('").append(unparsedSyllables.get(0)).append(unparsedSyllables.get(1)).append(')');
+            this.output = parsedWord.toString();
+            return;
+        }
+
         //NONFINALITY
         /*
 
@@ -249,14 +261,16 @@ public class LinguisticModel {
         //Step 1 and Step 2
         for (int unparsedSyllableIndex = unparsedSyllables.size() - 2; unparsedSyllableIndex >= 0; unparsedSyllableIndex--) {
             //Step 3
-            if (this.isHeavySyllable(unparsedSyllables.get(unparsedSyllableIndex))) {
-                if (!primaryFootParsed) {
-                    parsedWord.insert(this.rootLocation, "('" + unparsedSyllables.get(unparsedSyllableIndex) + ")");
-                    primaryFootParsed = true;
-                    continue;
-                }
+            if (!primaryFootParsed && this.isHeavySyllable(unparsedSyllables.get(unparsedSyllableIndex))) {
+                parsedWord.insert(this.rootLocation, "('" + unparsedSyllables.get(unparsedSyllableIndex) + ")");
+                primaryFootParsed = true;
 
-                parsedWord.insert(this.rootLocation, "(ˌ" + unparsedSyllables.get(unparsedSyllableIndex) + ")");
+                //Since Budai Rukai starts to have secondary stress when the number of syllables are greater than or equal to 5, the remaining syllables of a lexical word with only 4 syllables
+                //should remain unparsed
+                if (unparsedSyllables.size() == 4) {
+                    parsedWord.insert(this.rootLocation, unparsedSyllables.get(unparsedSyllableIndex - 2) + unparsedSyllables.get(unparsedSyllableIndex - 1));
+                    break;
+                }
                 continue;
             }
 
@@ -268,7 +282,6 @@ public class LinguisticModel {
                     primaryFootParsed = true;
                     continue;
                 }
-
                 parsedWord.insert(this.rootLocation, "(ˌ" + unparsedSyllables.get(unparsedSyllableIndex) + lastSyllable + ")");
                 lastSyllable = "";
                 continue;
