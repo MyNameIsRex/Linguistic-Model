@@ -37,8 +37,6 @@ public class LinguisticModel {
     //Character Array of Vowels, SHOULD NOT BE MODIFIED!!!
     public final char[] vowels = {'i', 'y', 'ɨ', 'ʉ', 'ɯ', 'u', 'ɪ', 'ʏ', 'ʊ', 'e', 'ø', 'ɘ', 'ɵ', 'ɤ', 'o', 'ə', 'ɛ', 'œ', 'ɜ', 'ɞ', 'ʌ', 'ɔ', 'ɐ', 'æ', 'a', 'ɶ', 'ɑ', 'ɒ'};
 
-    public Scanner scanner;
-
     public String input;
     public String output;
 
@@ -48,9 +46,6 @@ public class LinguisticModel {
     public List<Integer> vowelIndicies;
 
     public LinguisticModel() {
-        //Allows user input
-        this.scanner = new Scanner(System.in);
-
         //Defaulting the root location in the input to 0, or the start of the String
         this.rootLocation = 0;
 
@@ -58,44 +53,20 @@ public class LinguisticModel {
         //Need a syllable list and a vowel indicies list
         this.syllables = new ArrayList<>();
         this.vowelIndicies = new ArrayList<>();
+    }
 
-        //Initialize
-        this.prompt("Enter a word from Budai Rukai, separating prefixes, infixes, root, and suffixes!");
-
-        //Get the lexical word/morpheme from user input
-        this.input = this.scanner.nextLine();
-
-        //Close the scanner to avoid any new user input
-        this.scanner.close();
-
+    public void initialize(String input) {
+        this.input = input;
+        this.output = "";
+        this.syllables.clear();
+        this.vowelIndicies.clear();
         this.runProgram();
-    }
-
-    public static void main(String[] args) {
-        //Explicitly calling the constructor to avoid any static-typed objects of methods
-        new LinguisticModel();
-    }
-
-    //Prints the prompt, aesthetics
-    private void prompt(String prompt) {
-        for (int i = 0; i < 100; i++) {
-            System.out.print('=');
-        }
-
-        System.out.println("\n\n" + prompt + "\n");
-
-        for (int i = 0; i < 100; i++) {
-            System.out.print('=');
-        }
-
-        System.out.println();
     }
 
     //Runs the program
     private void runProgram() {
         this.interpretInputWord();
         this.parseSyllables();
-        this.prompt("Word has been parsed: " + this.output);
     }
 
     /*
@@ -233,7 +204,7 @@ public class LinguisticModel {
         }
 
         if (unparsedSyllables.size() == 2) {
-            if (this.rootLocation == 0) {
+            if (unparsedSyllables.get(0).contains(":")) {
                 parsedWord.append("('").append(unparsedSyllables.get(0)).append(')').append(unparsedSyllables.get(1));
                 this.output = parsedWord.toString();
                 return;
@@ -312,5 +283,9 @@ public class LinguisticModel {
     private boolean isHeavySyllable(String syllable) {
         //If the syllable contains a long vowel indicator ':' or a glide 'j' or 'w'
         return syllable.contains(":") || syllable.contains("j") || syllable.contains("w");
+    }
+
+    public String getOutput() {
+        return this.output;
     }
 }
