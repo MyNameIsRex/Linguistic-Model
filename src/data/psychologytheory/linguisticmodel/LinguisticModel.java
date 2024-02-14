@@ -4,7 +4,7 @@ package data.psychologytheory.linguisticmodel;
 
 ====================================================================================================
 
-                          LINGUISTIC MODEL     by Rex Huang (Feb 1, 2024 ~ Feb 5, 2024)
+             LINGUISTIC MODEL     by Rex Huang (Feb 1, 2024 ~ Feb 5, 2024 & Feb 14, 2024)
 
 ====================================================================================================
 
@@ -44,20 +44,23 @@ public class LinguisticModel {
 
     public List<String> syllables;
     public List<Integer> vowelIndicies;
+    public List<Integer> hyphenIndicies;
 
     public LinguisticModel() {
         //Defaulting the root location in the input to 0, or the start of the String
         this.rootLocation = 0;
 
         //Using ArrayList for easier manipulations
-        //Need a syllable list and a vowel indicies list
+        //Need a syllable list, a vowel indicies list, and a hyphen indicies list
         this.syllables = new ArrayList<>();
         this.vowelIndicies = new ArrayList<>();
+        this.hyphenIndicies = new ArrayList<>();
     }
 
     public void initialize(String input) {
         this.input = input;
         this.output = "";
+        this.rootLocation = 0;
         this.syllables.clear();
         this.vowelIndicies.clear();
         this.runProgram();
@@ -73,7 +76,7 @@ public class LinguisticModel {
 
     Interpret the Input
      1. If the word contains '-', indicating different sections, loop through the word and place the starting index of the different sections into an ArrayList. If not, skip this step.
-     3. Separate each syllable based on the structure CV or CVG, glide can only be j or w.
+     2. Separate each syllable based on the structure CV or CVG, glide can only be j or w.
 
      */
     private void interpretInputWord() {
@@ -97,6 +100,11 @@ public class LinguisticModel {
                     this.vowelIndicies.add(index);
                 }
             }
+
+            //Step 3:
+            if (this.input.charAt(index) == '-') {
+                this.hyphenIndicies.add(index);
+            }
         }
     }
 
@@ -112,56 +120,25 @@ public class LinguisticModel {
          */
         StringBuilder syllable = new StringBuilder();
         for (int index : this.vowelIndicies) {
-            //1. Onset or section separator '-' or root indicator '['
-
-            /*
-
-            Check:
-             - If index - 2 is greater or equal to 0 and
-                 1. The character at index - 1 is a section separator '-' and the character index is a consonant
-                 or
-                 2. The character at index - 2 is a section separator '-'
-                 or
-                 3. The character at index - 2 is a consonant and not a root indicator '[' nor a long vowel indicator ':" and The character at index - 1 is a consonant
-
-             */
-            if (index - 2 >= 0 && ((this.input.charAt(index - 1) == '-' && this.isNotVowel(this.input.charAt(index - 2)) ||
-                this.input.charAt(index - 2) == '-') ||
-                this.isNotVowel(this.input.charAt(index - 2)) && this.input.charAt(index - 2) != '[' && this.input.charAt(index - 2) != ':' && this.isNotVowel(this.input.charAt(index - 1)))) {
+            //Onset
+            if (index - 2 >= 0 && ((this.isLetter(this.input.charAt(index - 2)) && this.isNotVowel(this.input.charAt(index - 2)) && !this.isGlide(this.input.charAt(index - 2))) ||
+                    (this.input.charAt(index - 2) == '-') && this.isLetter(this.input.charAt(index - 1)))) {
                 syllable.append(this.input.charAt(index - 2));
             }
 
-            /*
-
-            Check:
-             - If index - 1 is greater than equal to 0 and the character at index - 1 is not a root indicator '[' and the character at index - 1 is a consonant
-
-             */
-            if (index - 1 >= 0 && this.input.charAt(index - 1) != '[' && this.isNotVowel(this.input.charAt(index - 1))) {
+            if (index - 1 >= 0 && (this.isLetter(this.input.charAt(index - 1)) && this.isNotVowel(this.input.charAt(index - 1)) || this.input.charAt(index - 1) == '-')) {
                 syllable.append(this.input.charAt(index - 1));
             }
 
-            //2. Vowel
+            //Vowel
             syllable.append(this.input.charAt(index));
 
-            //3. Coda and long vowel indicator ':'
-
-            /*
-
-            Check:
-             - If index + 1 is less than or equal to maximum index of the lexical word/morpheme and
-                1. The character at index + 1 is a long vowel indicator ':'
-                or
-                2. The character at index + 1 is a glide 'j' or 'w'
-             */
-            if (index + 1 <= this.input.length() - 1 && (this.input.charAt(index + 1) == ':' || (this.input.charAt(index + 1) == 'w' || this.input.charAt(index + 1) == 'j'))) {
+            //Coda
+            if (index + 1 < this.input.length() && (this.isGlide(this.input.charAt(index + 1)) || this.isLongVowelIndicator(this.input.charAt(index + 1)))) {
                 syllable.append(this.input.charAt(index + 1));
             }
 
-            //Add the syllable to the syllable list
             this.syllables.add(syllable.toString());
-
-            //Empty the syllable list
             syllable.setLength(0);
         }
     }
@@ -176,21 +153,22 @@ public class LinguisticModel {
         //Build the parsed version of the word with this StringBuilder
         StringBuilder parsedWord = new StringBuilder();
 
-        //Store all the unparsed syllables into this list, will be modified if the input contains a root indicator '[', indicating the presence of a prefix and/or an infix
+        //Copy all the unparsed syllables into this list, will be modified if the input contains a root indicator '[', indicating the presence of a prefix and/or an infix
         List<String> unparsedSyllables = this.syllables;
 
-        //Can and SHOULD store a maximum of one syllable in this String
-        String lastSyllable = "";
+        //A storage for the skipped light syllable
+        String unparsedLightSyllable = "";
 
-        //To make sure there is only one head in the word, only allowing one head (') in a prosodic word
-        boolean primaryFootParsed = false;
+        //Primary Stress Parsed
+        boolean primaryStressParsed = false;
 
         //HAVESTRESS/ROOT
         if (this.input.contains("[")) {
             parsedWord.append(this.input, 0, this.rootLocation);
-            for (String syllable : this.syllables) {
-                if (syllable.charAt(0) == this.input.charAt(this.rootLocation) && syllable.charAt(syllable.length() - 1) == this.input.charAt(this.rootLocation + syllable.length() - 1)) {
-                    unparsedSyllables = this.syllables.subList(this.syllables.indexOf(syllable), this.syllables.size());
+
+            for (String syllable : unparsedSyllables) {
+                if (this.input.charAt(this.rootLocation) == syllable.charAt(0) && this.input.charAt(this.rootLocation + syllable.length() - 1) == syllable.charAt(syllable.length() - 1)) {
+                    unparsedSyllables = unparsedSyllables.subList(unparsedSyllables.indexOf(syllable), unparsedSyllables.size());
                     break;
                 }
             }
@@ -203,14 +181,21 @@ public class LinguisticModel {
             return;
         }
 
+        //Two syllables in root
         if (unparsedSyllables.size() == 2) {
-            if (unparsedSyllables.get(0).contains(":")) {
-                parsedWord.append("('").append(unparsedSyllables.get(0)).append(')').append(unparsedSyllables.get(1));
+            //HAVESTRESS/ROOT
+            if (this.input.contains("[")) {
+                if (this.isHeavySyllable(unparsedSyllables.get(0))) {
+                    parsedWord.append("('").append(unparsedSyllables.get(0)).append(')').append(unparsedSyllables.get(1));
+                    this.output = parsedWord.toString();
+                    return;
+                }
+                parsedWord.append("('").append(unparsedSyllables.get(0)).append(unparsedSyllables.get(1)).append(')');
                 this.output = parsedWord.toString();
                 return;
             }
 
-            parsedWord.append("('").append(unparsedSyllables.get(0)).append(unparsedSyllables.get(1)).append(')');
+            parsedWord.append("('").append(unparsedSyllables.get(0)).append(')').append(unparsedSyllables.get(1));
             this.output = parsedWord.toString();
             return;
         }
@@ -232,42 +217,70 @@ public class LinguisticModel {
         //Step 1 and Step 2
         for (int unparsedSyllableIndex = unparsedSyllables.size() - 2; unparsedSyllableIndex >= 0; unparsedSyllableIndex--) {
             //Step 3
-            if (!primaryFootParsed && this.isHeavySyllable(unparsedSyllables.get(unparsedSyllableIndex))) {
+            if (this.isHeavySyllable(unparsedSyllables.get(unparsedSyllableIndex))) {
                 parsedWord.insert(this.rootLocation, "('" + unparsedSyllables.get(unparsedSyllableIndex) + ")");
-                primaryFootParsed = true;
+                if (!primaryStressParsed) {
+                    primaryStressParsed = true;
+                }
 
-                //Since Budai Rukai starts to have secondary stress when the number of syllables are greater than or equal to 5, the remaining syllables of a lexical word with only 4 syllables
-                //should remain unparsed
                 if (unparsedSyllables.size() == 4) {
-                    parsedWord.insert(this.rootLocation, unparsedSyllables.get(unparsedSyllableIndex - 2) + unparsedSyllables.get(unparsedSyllableIndex - 1));
+                    parsedWord.insert(this.rootLocation, unparsedSyllables.get(0) + unparsedSyllables.get(1));
                     break;
                 }
                 continue;
             }
 
-            //Step 4-2, must be processed when lastSyllable is not empty as then we can parse both syllables
-            if (!lastSyllable.isEmpty()) {
-                if (!primaryFootParsed) {
-                    parsedWord.insert(this.rootLocation, "('" + unparsedSyllables.get(unparsedSyllableIndex) + lastSyllable + ")");
-                    lastSyllable = "";
-                    primaryFootParsed = true;
-                    continue;
-                }
-                parsedWord.insert(this.rootLocation, "(ˌ" + unparsedSyllables.get(unparsedSyllableIndex) + lastSyllable + ")");
-                lastSyllable = "";
+            if (unparsedSyllableIndex - 1 >= 0 && this.isHeavySyllable(unparsedSyllables.get(unparsedSyllableIndex - 1))) {
+                parsedWord.insert(this.rootLocation, unparsedSyllables.get(unparsedSyllableIndex));
                 continue;
             }
 
-            //Step 4-1, must be processed before Step 5 logically to make sure a new light syllable can be stored here
-            lastSyllable = unparsedSyllables.get(unparsedSyllableIndex);
+            //Step 4
+            if (!unparsedLightSyllable.isEmpty()) {
+                if (unparsedSyllableIndex == 0) {
+                    if (primaryStressParsed) {
+                        parsedWord.insert(this.rootLocation, "(ˌ" + unparsedSyllables.get(unparsedSyllableIndex) + unparsedLightSyllable + ")");
+                        break;
+                    }
+
+                    parsedWord.insert(this.rootLocation, "('" + unparsedSyllables.get(unparsedSyllableIndex) + unparsedLightSyllable + ")");
+                    break;
+                }
+
+                if (primaryStressParsed) {
+                    parsedWord.insert(this.rootLocation, "(ˌ" + unparsedSyllables.get(unparsedSyllableIndex) + unparsedLightSyllable + ")");
+                    unparsedLightSyllable = "";
+                    continue;
+                }
+
+                parsedWord.insert(this.rootLocation, "('" + unparsedSyllables.get(unparsedSyllableIndex) + unparsedLightSyllable + ")");
+                primaryStressParsed = true;
+                unparsedLightSyllable = "";
+                continue;
+            }
+
+            if (unparsedSyllableIndex > 0) {
+                unparsedLightSyllable = unparsedSyllables.get(unparsedSyllableIndex);
+                continue;
+            }
 
             //Step 5
-            if (unparsedSyllableIndex == 0) {
-                parsedWord.insert(this.rootLocation, lastSyllable);
-            }
+            parsedWord.insert(this.rootLocation, unparsedSyllables.get(unparsedSyllableIndex));
         }
+
         parsedWord.append(this.syllables.get(this.syllables.size() - 1));
         this.output = parsedWord.toString();
+    }
+
+    private boolean isLetter(char c) {
+        return Character.isLetter(c);
+    }
+    private boolean isGlide(char c) {
+        return this.isLetter(c) && (c == 'j' || c == 'w');
+    }
+
+    private boolean isLongVowelIndicator(char c) {
+        return c == ':';
     }
 
     private boolean isNotVowel(char c) {
@@ -284,6 +297,7 @@ public class LinguisticModel {
         //If the syllable contains a long vowel indicator ':' or a glide 'j' or 'w'
         return syllable.contains(":") || syllable.contains("j") || syllable.contains("w");
     }
+
 
     public String getOutput() {
         return this.output;
