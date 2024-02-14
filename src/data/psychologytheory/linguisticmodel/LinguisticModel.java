@@ -9,10 +9,10 @@ package data.psychologytheory.linguisticmodel;
  */
 
 import java.util.ArrayList;
-import java.util.Scanner;
 import java.util.List;
 
 public class LinguisticModel {
+    //Character Array of Vowels, SHOULD NOT BE MODIFIED!!!
     public final char[] vowels = {'i', 'y', 'ɨ', 'ʉ', 'ɯ', 'u', 'ɪ', 'ʏ', 'ʊ', 'e', 'ø', 'ɘ', 'ɵ', 'ɤ', 'o', 'ə', 'ɛ', 'œ', 'ɜ', 'ɞ', 'ʌ', 'ɔ', 'ɐ', 'æ', 'a', 'ɶ', 'ɑ', 'ɒ'};
 
     public String input;
@@ -61,18 +61,14 @@ public class LinguisticModel {
                     this.vowelIndicies.add(index);
                 }
             }
-
-            if (this.input.charAt(index) == '-') {
-                this.hyphenIndicies.add(index);
-            }
         }
     }
 
     private void createSyllableList() {
         StringBuilder syllable = new StringBuilder();
         for (int index : this.vowelIndicies) {
-            if (index - 2 >= 0 && ((this.isLetter(this.input.charAt(index - 2)) && this.isNotVowel(this.input.charAt(index - 2)) && !this.isGlide(this.input.charAt(index - 2)) && this.isNotVowel(this.input.charAt(index - 1))) ||
-                (this.input.charAt(index - 2) == '-' && this.isLetter(this.input.charAt(index - 1))))) {
+            if (index - 2 >= 0 && ((this.isLetter(this.input.charAt(index - 2)) && this.isNotVowel(this.input.charAt(index - 2)) && !this.isGlide(this.input.charAt(index - 2))) ||
+                    (this.input.charAt(index - 2) == '-') && this.isLetter(this.input.charAt(index - 1)))) {
                 syllable.append(this.input.charAt(index - 2));
             }
 
@@ -99,6 +95,7 @@ public class LinguisticModel {
 
         if (this.input.contains("[")) {
             parsedWord.append(this.input, 0, this.rootLocation);
+
             for (String syllable : unparsedSyllables) {
                 if (this.input.charAt(this.rootLocation) == syllable.charAt(0) && this.input.charAt(this.rootLocation + syllable.length() - 1) == syllable.charAt(syllable.length() - 1)) {
                     unparsedSyllables = unparsedSyllables.subList(unparsedSyllables.indexOf(syllable), unparsedSyllables.size());
@@ -114,13 +111,13 @@ public class LinguisticModel {
         }
 
         if (unparsedSyllables.size() == 2) {
-            if (!this.isHeavySyllable(unparsedSyllables.get(0)) && this.input.contains("[")) {
-                parsedWord.append("('").append(unparsedSyllables.get(0)).append(unparsedSyllables.get(1)).append(')');
+            if (!this.input.contains("[") || this.isHeavySyllable(unparsedSyllables.get(0))) {
+                parsedWord.append("('").append(unparsedSyllables.get(0)).append(')').append(unparsedSyllables.get(1));
                 this.output = parsedWord.toString();
                 return;
             }
 
-            parsedWord.append("('").append(unparsedSyllables.get(0)).append(')').append(unparsedSyllables.get(1));
+            parsedWord.append("('").append(unparsedSyllables.get(0)).append(unparsedSyllables.get(1)).append(')');
             this.output = parsedWord.toString();
             return;
         }
@@ -145,24 +142,23 @@ public class LinguisticModel {
             }
 
             if (!unparsedLightSyllable.isEmpty()) {
-                if (!primaryStressParsed && unparsedSyllableIndex == 0) {
-                    parsedWord.insert(this.rootLocation, "('" + unparsedSyllables.get(unparsedSyllableIndex) + unparsedLightSyllable + ")");
-                    break;
-                }
-
                 if (!primaryStressParsed) {
                     parsedWord.insert(this.rootLocation, "('" + unparsedSyllables.get(unparsedSyllableIndex) + unparsedLightSyllable + ")");
+
+                    if (unparsedSyllableIndex == 0) {
+                        break;
+                    }
+
                     primaryStressParsed = true;
                     unparsedLightSyllable = "";
                     continue;
                 }
 
+                parsedWord.insert(this.rootLocation, "(ˌ" + unparsedSyllables.get(unparsedSyllableIndex) + unparsedLightSyllable + ")");
+
                 if (unparsedSyllableIndex == 0) {
-                    parsedWord.insert(this.rootLocation, "(ˌ" + unparsedSyllables.get(unparsedSyllableIndex) + unparsedLightSyllable + ")");
                     break;
                 }
-
-                parsedWord.insert(this.rootLocation, "(ˌ" + unparsedSyllables.get(unparsedSyllableIndex) + unparsedLightSyllable + ")");
                 unparsedLightSyllable = "";
                 continue;
             }
@@ -182,7 +178,6 @@ public class LinguisticModel {
     private boolean isLetter(char c) {
         return Character.isLetter(c);
     }
-    
     private boolean isGlide(char c) {
         return this.isLetter(c) && (c == 'j' || c == 'w');
     }
@@ -192,7 +187,6 @@ public class LinguisticModel {
     }
 
     private boolean isNotVowel(char c) {
-        //Loop through the vowel list, if the given character is a vowel, return false, else, return true
         for (char vowel : this.vowels) {
             if (c == vowel) {
                 return false;
@@ -202,7 +196,6 @@ public class LinguisticModel {
     }
 
     private boolean isHeavySyllable(String syllable) {
-        //If the syllable contains a long vowel indicator ':' or a glide 'j' or 'w'
         return syllable.contains(":") || syllable.contains("j") || syllable.contains("w");
     }
 
