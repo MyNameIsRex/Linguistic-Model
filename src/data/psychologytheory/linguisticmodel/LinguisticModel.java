@@ -125,14 +125,13 @@ public class LinguisticModel {
         for (int unparsedSyllableIndex = unparsedSyllables.size() - 2; unparsedSyllableIndex >= 0; unparsedSyllableIndex--) {
             if (this.isHeavySyllable(unparsedSyllables.get(unparsedSyllableIndex))) {
                 parsedWord.insert(this.rootLocation, "('" + unparsedSyllables.get(unparsedSyllableIndex) + ")");
+
                 if (unparsedSyllables.size() == 4) {
                     parsedWord.insert(this.rootLocation, unparsedSyllables.get(0) + unparsedSyllables.get(1));
                     break;
                 }
 
-                if (!primaryStressParsed) {
-                    primaryStressParsed = true;
-                }
+                primaryStressParsed = true;
                 continue;
             }
 
@@ -144,17 +143,13 @@ public class LinguisticModel {
             if (!unparsedLightSyllable.isEmpty()) {
                 if (!primaryStressParsed) {
                     parsedWord.insert(this.rootLocation, "('" + unparsedSyllables.get(unparsedSyllableIndex) + unparsedLightSyllable + ")");
-
-                    if (unparsedSyllableIndex == 0) {
-                        break;
-                    }
-
-                    primaryStressParsed = true;
-                    unparsedLightSyllable = "";
-                    continue;
                 }
 
-                parsedWord.insert(this.rootLocation, "(ˌ" + unparsedSyllables.get(unparsedSyllableIndex) + unparsedLightSyllable + ")");
+                if (primaryStressParsed) {
+                    parsedWord.insert(this.rootLocation, "(ˌ" + unparsedSyllables.get(unparsedSyllableIndex) + unparsedLightSyllable + ")");
+                }
+
+                primaryStressParsed = true;
 
                 if (unparsedSyllableIndex == 0) {
                     break;
