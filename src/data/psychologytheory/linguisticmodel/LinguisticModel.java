@@ -3,7 +3,10 @@ package data.psychologytheory.linguisticmodel;
 /*
 ====================================================================================================
 
-             LINGUISTIC MODEL     by Rex Huang (Feb 1, 2024 ~ Feb 5, 2024 & Feb 14, 2024)
+  LINGUISTIC MODEL     by Rex Huang (Feb 1, 2024 ~ Feb 5, 2024 & Feb 14, 2024)
+
+  Documentation Here:
+  https://docs.google.com/document/d/1YuSskrAupnGG1nrvtkYVVj0KVV6QGbzcYoBlzv2w1Gw/edit?usp=sharing
 
 ====================================================================================================
  */
